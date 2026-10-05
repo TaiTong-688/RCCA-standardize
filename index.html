@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCCA Standardizer</title>
+    <style>
+        :root {
+            --primary: #0f62fe;
+            --bg: #f4f7fb;
+            --border: #d0d7de;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid var(--border);
+        }
+        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;}
+        h3 { color: #555; margin-top: 25px; font-size: 1.1rem; }
+        
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+        
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        input, textarea, select {
+            width: 100%; padding: 10px; border: 1px solid var(--border);
+            border-radius: 4px; box-sizing: border-box; font-family: inherit;
+        }
+        textarea { resize: vertical; height: 80px; }
+        
+        .why-group input { margin-bottom: 10px; }
+        
+        button {
+            background-color: var(--primary); color: white; border: none;
+            padding: 12px 24px; border-radius: 4px; font-weight: bold;
+            cursor: pointer; font-size: 1rem; width: 100%; margin-top: 20px;
+        }
+        button:hover { background-color: #0353e9; }
+        
+        .output-section {
+            margin-top: 30px; padding: 20px; background-color: #f8f9fa;
+            border-left: 4px solid var(--primary); border-radius: 4px;
+            display: none; /* Ẩn đi cho đến khi bấm nút */
+        }
+        pre {
+            white-space: pre-wrap; font-family: 'Consolas', monospace;
+            font-size: 0.95rem; margin-bottom: 15px;
+        }
+        .copy-btn {
+            background-color: #198754; width: auto; padding: 8px 16px; margin-top: 0;
+        }
+        .copy-btn:hover { background-color: #157347; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Công cụ Chuẩn hóa Báo cáo RCCA</h2>
+        
+        <!-- Phần 1: Thông tin chung -->
+        <h3>1. Thông tin sự cố (General Info)</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Mã sản phẩm / Model:</label>
+                <input type="text" id="model" placeholder="VD: PCBA-1234">
+            </div>
+            <div class="form-group">
+                <label>Người phụ trách (Owner):</label>
+                <input type="text" id="owner" placeholder="Tên kỹ sư">
+            </div>
+            <div class="form-group">
+                <label>Ngày phát hiện:</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Mô tả vấn đề (Problem Statement - Lỗi gì, ở đâu, bao nhiêu lỗi?):</label>
+            <textarea id="problem" placeholder="Ví dụ: Phát hiện 5 PCS bị hở chân hàn tại vị trí IC U12 trong quá trình test FCT..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Hành động khắc phục tạm thời (Containment Action):</label>
+            <textarea id="containment" placeholder="Ví dụ: Dừng chuyền, hold lại toàn bộ 500 PCS đang sản xuất, sorting lại kho..."></textarea>
+        </div>
+
+        <!-- Phần 2: Phân tích nguyên nhân -->
+        <h3>2. Phân tích Nguyên nhân Gốc rễ (5-Whys Analysis)</h3>
+        <div class="why-group">
+            <input type="text" id="why1" placeholder="Why 1: Tại sao lỗi xảy ra?">
+            <input type="text" id="why2" placeholder="Why 2: Tại sao (nguyên nhân của Why 1)?">
+            <input type="text" id="why3" placeholder="Why 3: Tại sao (nguyên nhân của Why 2)?">
+            <input type="text" id="why4" placeholder="Why 4: Tại sao (nguyên nhân của Why 3)?">
+            <input type="text" id="why5" placeholder="Why 5: Tại sao (Nguyên nhân gốc rễ - Root Cause)?">
+        </div>
+
+        <!-- Phần 3: Hành động -->
+        <h3>3. Hành động Khắc phục & Phòng ngừa (Corrective/Preventive Action)</h3>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Hành động Khắc phục (Corrective Action - Sửa lỗi hiện tại):</label>
+            <textarea id="corrective" placeholder="Ví dụ: Cập nhật nhiệt độ máy hàn (Profile Reflow)..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Hành động Phòng ngừa (Preventive Action - Chống tái phát):</label>
+            <textarea id="preventive" placeholder="Ví dụ: Đưa thông số nhiệt độ mới vào SOP, thêm checklist kiểm tra đầu ca..."></textarea>
+        </div>
+
+        <button onclick="generateRCCA()">Tạo Báo Cáo Chuẩn</button>
+
+        <!-- Phần xuất kết quả -->
+        <div class="output-section" id="outputSection">
+            <label>Kết quả Báo cáo (Đã chuẩn hóa định dạng):</label>
+            <pre id="resultText"></pre>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 Copy Báo Cáo</button>
+        </div>
+    </div>
+
+    <script>
+        function generateRCCA() {
+            // Lấy dữ liệu từ các ô input
+            const model = document.getElementById('model').value || "[Chưa nhập]";
+            const owner = document.getElementById('owner').value || "[Chưa nhập]";
+            const date = document.getElementById('date').value || "[Chưa nhập]";
+            const problem = document.getElementById('problem').value || "[Chưa nhập]";
+            const containment = document.getElementById('containment').value || "[Chưa nhập]";
+            
+            const why1 = document.getElementById('why1').value;
+            const why2 = document.getElementById('why2').value;
+            const why3 = document.getElementById('why3').value;
+            const why4 = document.getElementById('why4').value;
+            const why5 = document.getElementById('why5').value;
+            
+            const corrective = document.getElementById('corrective').value || "[Chưa nhập]";
+            const preventive = document.getElementById('preventive').value || "[Chưa nhập]";
+
+            // Lắp ráp thành văn bản chuẩn
+            let report = `[RCCA REPORT] - MÃ SẢN PHẨM: ${model.toUpperCase()}\n`;
+            report += `Ngày: ${date} | Owner: ${owner}\n`;
+            report += `--------------------------------------------------\n\n`;
+            
+            report += `1. PROBLEM STATEMENT (Vấn đề):\n   - ${problem}\n\n`;
+            report += `2. CONTAINMENT ACTION (Hành động tức thời):\n   - ${containment}\n\n`;
+            
+            report += `3. ROOT CAUSE ANALYSIS (Phân tích 5-Whys):\n`;
+            if (why1) report += `   - Why 1: ${why1}\n`;
+            if (why2) report += `   - Why 2: ${why2}\n`;
+            if (why3) report += `   - Why 3: ${why3}\n`;
+            if (why4) report += `   - Why 4: ${why4}\n`;
+            if (why5) report += `   - Why 5 (Root Cause): ${why5}\n`;
+            if (!why1 && !why2 && !why3 && !why4 && !why5) report += `   - [Chưa phân tích]\n`;
+            report += `\n`;
+            
+            report += `4. CORRECTIVE ACTION (Khắc phục):\n   - ${corrective}\n\n`;
+            report += `5. PREVENTIVE ACTION (Phòng ngừa):\n   - ${preventive}\n`;
+            report += `--------------------------------------------------\n`;
+
+            // Hiển thị kết quả
+            document.getElementById('resultText').innerText = report;
+            document.getElementById('outputSection').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            const textToCopy = document.getElementById('resultText').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("Đã copy báo cáo vào bộ nhớ tạm! Bạn có thể dán (Ctrl+V) vào Email hoặc Word.");
+            }).catch(err => {
+                alert("Lỗi khi copy: " + err);
+            });
+        }
+    </script>
+</body>
+</html>
